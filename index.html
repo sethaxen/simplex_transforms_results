@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            width: 20%;
+            background-color: #f8f8f8;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100%;
+            overflow: auto;
+        }
+        .content {
+            width: 80%;
+            margin-left: 20%;
+            padding: 20px;
+        }
+        #plot-container {
+            width: 100%;
+            height: 100%;
+        }
+        #plot {
+            height: 80vh;  /* Adjust plot height */
+        }
+        h1 {
+            font-size: 1.5em;
+            margin: 0 0 1em 0;
+        }
+        label, select {
+            display: block;
+            margin: 10px 0;
+        }
+        .legend-item {
+            cursor: pointer;
+            margin-bottom: 5px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .legend-item.deselected {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>Simplex transforms results</h1>
+        <div>
+            <label for="columnSelect">Select Column:</label>
+            <select id="columnSelect">
+                <option value="max_abs_rel_error">max_abs_rel_error</option>
+                <option value="min_rel_ess_per_chain">min_rel_ess_per_chain</option>
+                <option value="min_rel_ess_bulk">min_rel_ess_bulk</option>
+                <option value="max_rhat">max_rhat</option>
+                <option value="n_divergent">n_divergent</option>
+                <option value="bfmi">bfmi</option>
+            </select>
+        </div>
+        <div>
+            <label for="logScaleSelect">Log Scale:</label>
+            <select id="logScaleSelect">
+                <option value="True" selected>True</option>
+                <option value="False">False</option>
+            </select>
+        </div>
+        <div>
+            <label for="estimateSelect">Select Estimate:</label>
+            <select id="estimateSelect">
+                <option value="x_mean" selected>x_mean</option>
+                <option value="x2_mean">x2_mean</option>
+                <option value="entropy">entropy</option>
+            </select>
+        </div>
+        <div id="legend" class="legend">
+            <h3>Legend:</h3>
+        </div>
+    </div>
+    <div class="content">
+        <div id="plot-container">
+            <div id="plot"></div>
+        </div>
+    </div>
+
+    <script>
+        d3.csv("results/summaries/all.csv").then(data => {
+            const transformOrder = [
+                'ALR', 'ILR', 'ExpandedSoftmax', 'NormalizedExponential',
+                'StanStickbreaking', 'StickbreakingLogistic', 'StickbreakingNormal',
+                'StickbreakingPowerLogistic', 'StickbreakingPowerNormal',
+                'StickbreakingAngular'
+            ];
+
+            function updatePlot() {
+                const selectedColumn = document.getElementById('columnSelect').value;
+                const logScale = document.getElementById('logScaleSelect').value;
+                const selectedEstimate = document.getElementById('estimateSelect').value;
+
+                // Filter data based on the log_scale and estimate selections and remove rows where the selected column is empty
+                const filteredData = data.filter(row => row[selectedColumn] !== '' && row.log_scale === logScale && row.estimate === selectedEstimate);
+
+                // Get unique target_config and target values for subplots
+                const uniqueConfigs = [...new Set(filteredData.map(row => `${row.target} ${row.target_config}`))];
+
+                // Create subplots
+                const rows = Math.ceil(uniqueConfigs.length / 3);
+                const cols = 3;
+
+                const fig = {
+                    data: [],
+                    layout: {
+                        grid: { rows: rows, columns: cols, pattern: 'independent', roworder: 'top to bottom' },
+                        title: `${selectedColumn} vs transform`,
+                        showlegend: false, // Disable legend in the plot
+                        height: rows * 200,  // Adjust height to make subplots taller
+                        margin: { l: 80, r: 20, b: 40, t: 50 },  // Adjust margins to ensure titles are visible
+                        shapes: []
+                    }
+                };
+
+                // Define colors for transforms
+                const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(transformOrder);
+
+                // Add traces and lines for each subplot
+                const legendTraces = [];
+                uniqueConfigs.forEach((config, index) => {
+                    const [target, targetConfig] = config.split(' ');
+                    const row = Math.floor(index / cols) + 1;
+                    const col = (index % cols) + 1;
+
+                    const configData = filteredData.filter(row => row.target === target && row.target_config === targetConfig);
+
+                    transformOrder.forEach(transform => {
+                        const transformData = configData.filter(row => row.transform === transform);
+
+                        const trace = {
+                            x: transformData.map(row => row.transform),
+                            y: transformData.map(row => Number(row[selectedColumn])),
+                            type: (selectedColumn === 'min_rel_ess_bulk' || selectedColumn === 'max_rhat') ? 'scatter' : 'box',
+                            mode: 'markers',  // For scatter plot
+                            name: transform,
+                            legendgroup: transform,
+                            marker: { color: colors(transform) },
+                            xaxis: `x${index + 1}`,
+                            yaxis: `y${index + 1}`
+                        };
+
+                        fig.data.push(trace);
+
+                        if (!legendTraces.some(t => t.name === transform)) {
+                            legendTraces.push({
+                                name: transform,
+                                marker: { color: colors(transform) },
+                                type: 'scatter',
+                                mode: 'markers',
+                                x: [null],
+                                y: [null]
+                            });
+                        }
+                    });
+
+                    fig.layout[`xaxis${index + 1}`] = { title: 'transform', showticklabels: row === rows, visible: row === rows, automargin: true, tickangle: -45 };
+                    fig.layout[`yaxis${index + 1}`] = { title: selectedColumn, type: selectedColumn !== 'n_divergent' && selectedColumn !== 'bfmi' ? 'log' : 'linear', automargin: true, tickpadding: 10 };
+                    fig.layout[`annotations`] = fig.layout[`annotations`] || [];
+                    fig.layout[`annotations`].push({
+                        text: `<b>${config}</b>`,
+                        x: 0.5,
+                        y: 1,
+                        xref: `x${index + 1} domain`,
+                        yref: `y${index + 1} domain`,
+                        showarrow: false,
+                        xanchor: 'center',
+                        yanchor: 'bottom'
+                    });
+
+                    // Add horizontal lines for specific columns
+                    if (selectedColumn === 'bfmi') {
+                        fig.layout.shapes.push({
+                            type: 'line',
+                            x0: 0,
+                            x1: 1,
+                            y0: 0.3,
+                            y1: 0.3,
+                            xref: `x${index + 1} domain`,
+                            yref: `y${index + 1}`,
+                            line: {
+                                dash: 'dot',
+                                color: 'black'
+                            }
+                        });
+                    } else if (selectedColumn === 'max_rhat') {
+                        fig.layout.shapes.push({
+                            type: 'line',
+                            x0: 0,
+                            x1: 1,
+                            y0: 1.01,
+                            y1: 1.01,
+                            xref: `x${index + 1} domain`,
+                            yref: `y${index + 1}`,
+                            line: {
+                                dash: 'dot',
+                                color: 'black'
+                            }
+                        });
+                    }
+                });
+
+                Plotly.newPlot('plot', fig.data, fig.layout).then(() => {
+                    const legendDiv = document.getElementById('legend');
+                    legendDiv.innerHTML = ''; // Clear previous legend items
+
+                    legendTraces.forEach((trace, index) => {
+                        const legendItem = document.createElement('div');
+                        legendItem.className = 'legend-item';
+                        legendItem.style.color = trace.marker.color;
+                        legendItem.innerHTML = trace.name;
+                        legendItem.onclick = () => {
+                            const traceIndices = fig.data
+                                .map((d, i) => (d.name === trace.name ? i : null))
+                                .filter(i => i !== null);
+                                const currentVisibility = fig.data[traceIndices[0]].visible !== 'legendonly';
+                            Plotly.restyle('plot', { visible: currentVisibility ? 'legendonly' : true }, traceIndices);
+                            legendItem.classList.toggle('deselected', currentVisibility);
+                        };
+                        legendDiv.appendChild(legendItem);
+                    });
+                });
+            }
+
+            document.getElementById('columnSelect').addEventListener('change', updatePlot);
+            document.getElementById('logScaleSelect').addEventListener('change', updatePlot);
+            document.getElementById('estimateSelect').addEventListener('change', updatePlot);
+
+            // Initial plot
+            updatePlot();
+        }).catch(error => {
+            console.error('Error loading or parsing data:', error);
+        });
+    </script>
+</body>
+</html>
