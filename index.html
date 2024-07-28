@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
+    <script src="scripts/sidebar.js"></script>
     <div class="hamburger" onclick="toggleSidebar()">&#9776;</div>
     <div class="sidebar" id="sidebar">
         <h1>Simplex transforms results</h1>
@@ -49,17 +50,6 @@
     </div>
 
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const isHidden = sidebar.classList.contains('hidden');
-            if (isHidden) {
-                sidebar.style.transform = 'translateX(0)';
-            } else {
-                sidebar.style.transform = 'translateX(-100%)';
-            }
-            sidebar.classList.toggle('hidden');
-        }
-
         d3.csv("results/summaries/all.csv").then(data => {
             const transformOrder = [
                 'ALR', 'ILR', 'ExpandedSoftmax', 'NormalizedExponential',
