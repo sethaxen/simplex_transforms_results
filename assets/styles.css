@@ -1,0 +1,95 @@
+body {
+    display: flex;
+    flex-direction: row; /* Ensure row direction for body */
+    margin: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+.sidebar {
+    width: 20%;
+    background-color: #f8f8f8;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    height: 100%;
+    overflow: auto;
+    position: fixed;
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+}
+.sidebar.hidden {
+    transform: translateX(-100%);
+}
+.hamburger {
+    display: none;
+    font-size: 30px;
+    cursor: pointer;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+}
+.content {
+    flex: 1;
+    margin-left: 20%;
+    padding: 20px;
+    overflow: auto;
+}
+#plot-container {
+    width: 100%;
+    height: 100%;
+}
+#plot {
+    height: 80vh;  /* Adjust plot height */
+}
+h1 {
+    font-size: 1.5em;
+    margin: 0 0 1em 0;
+}
+label, select {
+    display: block;
+    margin: 10px 0;
+}
+.legend-item {
+    cursor: pointer;
+    margin-bottom: 5px;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+.legend-item.deselected {
+    opacity: 0.3;
+}
+@media (max-width: 1200px) {
+    .content {
+        margin-left: 20%;
+        width: 80%;
+    }
+    .sidebar {
+        transform: translateX(0);
+    }
+    .hamburger {
+        display: none;
+    }
+}
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70%;
+        transform: translateX(-100%);
+    }
+    .content {
+        width: 100%;
+        margin-left: 0;
+        padding: 20px;
+    }
+    .hamburger {
+        display: block;
+    }
+    h1 {
+        margin-top: 60px; /* Ensure header doesn't overlap the hamburger menu */
+    }
+}
+@media (max-width: 480px) {
+    .sidebar {
+        width: 100%;
+    }
+}
