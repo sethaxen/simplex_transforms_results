@@ -26,10 +26,7 @@
         </div>
         <div>
             <label for="logScaleSelect">Log Scale:</label>
-            <select id="logScaleSelect">
-                <option value="True" selected>True</option>
-                <option value="False">False</option>
-            </select>
+            <input type="checkbox" id="logScaleSelect" checked>
         </div>
         <div>
             <label for="estimateSelect">Select Estimate:</label>
@@ -48,7 +45,6 @@
             <div id="plot"></div>
         </div>
     </div>
-
     <script>
         d3.csv("results/summaries/all.csv").then(data => {
             const transformOrder = [
@@ -60,11 +56,11 @@
 
             function updatePlot() {
                 const selectedColumn = document.getElementById('columnSelect').value;
-                const logScale = document.getElementById('logScaleSelect').value;
+                const logScale = document.getElementById('logScaleSelect').checked;
                 const selectedEstimate = document.getElementById('estimateSelect').value;
 
                 // Filter data based on the log_scale and estimate selections and remove rows where the selected column is empty
-                const filteredData = data.filter(row => row[selectedColumn] !== '' && row.log_scale === logScale && row.estimate === selectedEstimate);
+                const filteredData = data.filter(row => row[selectedColumn] !== '' && (row.log_scale === 'True') === logScale && row.estimate === selectedEstimate);
 
                 // Get unique target_config and target values for subplots
                 const uniqueConfigs = [...new Set(filteredData.map(row => `${row.target} ${row.target_config}`))];
