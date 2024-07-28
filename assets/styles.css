@@ -20,6 +20,10 @@ body {
 .sidebar.hidden {
     transform: translateX(-100%);
 }
+.sidebar .selector label, .sidebar .selector select, .sidebar .selector input {
+    display: inline-block;
+    margin: 5px 0;
+}
 .hamburger {
     display: none;
     font-size: 30px;

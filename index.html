@@ -13,7 +13,7 @@
     <div class="hamburger" onclick="toggleSidebar()">&#9776;</div>
     <div class="sidebar" id="sidebar">
         <h1>Simplex transforms results</h1>
-        <div>
+        <div class="selector">
             <label for="columnSelect">Select Column:</label>
             <select id="columnSelect">
                 <option value="max_abs_rel_error">max_abs_rel_error</option>
@@ -24,11 +24,11 @@
                 <option value="bfmi">bfmi</option>
             </select>
         </div>
-        <div>
+        <div class="selector">
             <label for="logScaleSelect">Log Scale:</label>
             <input type="checkbox" id="logScaleSelect" checked>
         </div>
-        <div>
+        <div class="selector">
             <label for="estimateSelect">Select Estimate:</label>
             <select id="estimateSelect">
                 <option value="x_mean" selected>x_mean</option>
