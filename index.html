@@ -13,8 +13,9 @@
     <div class="hamburger" onclick="toggleSidebar()">&#9776;</div>
     <div class="sidebar" id="sidebar">
         <h1>Simplex transforms results</h1>
+        <h3>Options</h3>
         <div class="selector">
-            <label for="columnSelect">Select Column:</label>
+            <label for="columnSelect">Select metric:</label>
             <select id="columnSelect">
                 <option value="max_abs_rel_error">max_abs_rel_error</option>
                 <option value="min_rel_ess_per_chain">min_rel_ess_per_chain</option>
@@ -25,7 +26,7 @@
             </select>
         </div>
         <div class="selector">
-            <label for="logScaleSelect">Log Scale:</label>
+            <label for="logScaleSelect">Log-simplex:</label>
             <input type="checkbox" id="logScaleSelect" checked>
         </div>
         <div class="selector">
@@ -36,11 +37,13 @@
                 <option value="entropy">entropy</option>
             </select>
         </div>
+        <h3>Legend</h3>
         <div id="legend" class="legend">
-            <h3>Legend:</h3>
+            <div id="legendContent" class="legendContent"></div>
         </div>
     </div>
     <div class="content">
+        <h1>Simplex transforms results</h1>
         <div id="plot-container">
             <div id="plot"></div>
         </div>
@@ -171,7 +174,7 @@
                 });
 
                 Plotly.newPlot('plot', fig.data, fig.layout).then(() => {
-                    const legendDiv = document.getElementById('legend');
+                    const legendDiv = document.getElementById('legendContent');
                     legendDiv.innerHTML = ''; // Clear previous legend items
 
                     legendTraces.forEach((trace, index) => {
