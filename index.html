@@ -127,7 +127,7 @@
                         }
                     });
 
-                    fig.layout[`xaxis${index + 1}`] = { title: 'transform', showticklabels: row === rows, visible: row === rows, automargin: true, tickangle: -45 };
+                    fig.layout[`xaxis${index + 1}`] = { title: 'transform', showticklabels: row === rows, visible: row === rows, automargin: true, tickangle: 45 };
                     fig.layout[`yaxis${index + 1}`] = { title: selectedColumn, type: selectedColumn !== 'n_divergent' && selectedColumn !== 'bfmi' ? 'log' : 'linear', automargin: true, tickpadding: 10 };
                     fig.layout[`annotations`] = fig.layout[`annotations`] || [];
                     fig.layout[`annotations`].push({
