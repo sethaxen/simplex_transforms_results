@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Dashboard</title>
+    <title>Simplex transforms results</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
     <script src="scripts/sidebar.js"></script>
-    <div class="hamburger" onclick="toggleSidebar()">&#9776;</div>
+
+    <div class="menu-bar">
+        <div>
+            <a href="/">Home</a>
+        </div>
+        <div class="hamburger" onclick="toggleSidebar()">☰</div>
+    </div>
+
     <div class="sidebar" id="sidebar">
-        <h1>Simplex transforms results</h1>
         <h3>Options</h3>
         <div class="selector">
-            <label for="columnSelect">Select metric:</label>
+            <label for="columnSelect">Metric:</label>
             <select id="columnSelect">
                 <option value="max_abs_rel_error">max_abs_rel_error</option>
                 <option value="min_rel_ess_per_chain">min_rel_ess_per_chain</option>
@@ -30,7 +36,7 @@
             <input type="checkbox" id="logScaleSelect" checked>
         </div>
         <div class="selector">
-            <label for="estimateSelect">Select Estimate:</label>
+            <label for="estimateSelect">Estimate:</label>
             <select id="estimateSelect">
                 <option value="x_mean" selected>x_mean</option>
                 <option value="x2_mean">x2_mean</option>
