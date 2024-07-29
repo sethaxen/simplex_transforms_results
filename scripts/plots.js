@@ -5,30 +5,21 @@ const transformOrder = [
     'StickbreakingAngular'
 ];
 
-function plotSummary(data, document) {
-    const selectedColumn = document.getElementById('columnSelect').value;
-    const logScale = document.getElementById('logScaleSelect').checked;
-    const selectedEstimate = document.getElementById('estimateSelect').value;
-
-    // Filter data based on the log_scale and estimate selections and remove rows where the selected column is empty
-    const filteredData = data.filter(row => row[selectedColumn] !== '' && (row.log_scale === 'True') === logScale && row.estimate === selectedEstimate);
+function plotSummary(data, selectedColumn, numCols) {
+    // Remove rows where the selected column is empty
+    const filteredData = data.filter(row => row[selectedColumn] !== '');
 
     // Get unique target_config and target values for subplots
     const uniqueConfigs = [...new Set(filteredData.map(row => `${row.target} ${row.target_config}`))];
-
-    // Determine number of rows based on screen width
-    const isMobile = window.innerWidth <= 768;
-    const isNarrow = window.innerWidth <= 1200;
-    const cols = isMobile ? 1 : isNarrow ? 2 : 3;  // Adjust number of columns
-    const rows = Math.ceil(uniqueConfigs.length / cols);
+    const numRows = Math.ceil(uniqueConfigs.length / numCols);
 
     const fig = {
         data: [],
         layout: {
-            grid: { rows: rows, columns: cols, pattern: 'independent', roworder: 'top to bottom' },
+            grid: { rows: numRows, columns: numCols, pattern: 'independent', roworder: 'top to bottom' },
             title: `${selectedColumn} vs transform`,
             showlegend: false, // Disable legend in the plot
-            height: rows * 300,  // Adjust height to make subplots taller
+            height: numRows * 300,  // Adjust height to make subplots taller
             margin: { l: 80, r: 20, b: 60, t: 50 },  // Adjust margins to ensure titles are visible
             shapes: []
         }
@@ -41,8 +32,8 @@ function plotSummary(data, document) {
     const legendTraces = [];
     uniqueConfigs.forEach((config, index) => {
         const [target, targetConfig] = config.split(' ');
-        const row = Math.floor(index / cols) + 1;
-        const col = (index % cols) + 1;
+        const row = Math.floor(index / numCols) + 1;
+        const col = (index % numCols) + 1;
 
         const configData = filteredData.filter(row => row.target === target && row.target_config === targetConfig);
 
@@ -75,7 +66,7 @@ function plotSummary(data, document) {
             }
         });
 
-        fig.layout[`xaxis${index + 1}`] = { title: 'transform', showticklabels: row === rows, visible: row === rows, automargin: true, tickangle: 45 };
+        fig.layout[`xaxis${index + 1}`] = { title: 'transform', showticklabels: row === numRows, visible: row === numRows, automargin: true, tickangle: 45 };
         fig.layout[`yaxis${index + 1}`] = { title: selectedColumn, type: selectedColumn !== 'n_divergent' && selectedColumn !== 'bfmi' ? 'log' : 'linear', automargin: true, tickpadding: 10 };
         fig.layout[`annotations`] = fig.layout[`annotations`] || [];
         fig.layout[`annotations`].push({
