@@ -69,9 +69,9 @@
                 plotSummary(filteredData, selectedColumn, numCols);
             }
 
-            document.getElementById('columnSelect').addEventListener('change', () => updatePlots);
-            document.getElementById('logScaleSelect').addEventListener('change', () => updatePlots);
-            document.getElementById('estimateSelect').addEventListener('change', () => updatePlots);
+            document.getElementById('columnSelect').addEventListener('change', updatePlots);
+            document.getElementById('logScaleSelect').addEventListener('change', updatePlots);
+            document.getElementById('estimateSelect').addEventListener('change', updatePlots);
 
             // Initial plot
             updatePlots();
