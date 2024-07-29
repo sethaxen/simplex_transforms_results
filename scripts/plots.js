@@ -5,6 +5,9 @@ const transformOrder = [
     'StickbreakingAngular'
 ];
 
+// Define colors for transforms
+const transformColors = d3.scaleOrdinal(d3.schemeCategory10).domain(transformOrder);
+
 function plotSummary(data, selectedColumn, numCols) {
     // Remove rows where the selected column is empty
     const filteredData = data.filter(row => row[selectedColumn] !== '');
@@ -25,9 +28,6 @@ function plotSummary(data, selectedColumn, numCols) {
         }
     };
 
-    // Define colors for transforms
-    const colors = d3.scaleOrdinal(d3.schemeCategory10).domain(transformOrder);
-
     // Add traces and lines for each subplot
     const legendTraces = [];
     uniqueConfigs.forEach((config, index) => {
@@ -47,7 +47,7 @@ function plotSummary(data, selectedColumn, numCols) {
                 mode: 'markers',  // For scatter plot
                 name: transform,
                 legendgroup: transform,
-                marker: { color: colors(transform) },
+                marker: { color: transformColors(transform) },
                 xaxis: `x${index + 1}`,
                 yaxis: `y${index + 1}`
             };
@@ -57,7 +57,7 @@ function plotSummary(data, selectedColumn, numCols) {
             if (!legendTraces.some(t => t.name === transform)) {
                 legendTraces.push({
                     name: transform,
-                    marker: { color: colors(transform) },
+                    marker: { color: transformColors(transform) },
                     type: 'scatter',
                     mode: 'markers',
                     x: [null],
@@ -132,4 +132,80 @@ function plotSummary(data, selectedColumn, numCols) {
             legendDiv.appendChild(legendItem);
         });
     });
+}
+
+function groupQuantiles(data, targetColumn, groupColumns, quantiles) {
+    // Create a key function for grouping
+    const keyFunction = d => groupColumns.map(col => d[col]).join('--');
+
+    // Group the data
+    let groupedData = d3.group(data, keyFunction);
+
+    // Calculate the specified quantiles for each group and flatten the result
+    let result = [];
+    groupedData.forEach((group, key) => {
+        let quantileValues = {};
+        quantiles.forEach(q => {
+            quantileValues[`q${q}`] = d3.quantile(group.map(d => d[targetColumn]).sort(d3.ascending), q);
+        });
+        let groupKeys = key.split('--').reduce((obj, val, index) => {
+            obj[groupColumns[index]] = val;
+            return obj;
+        }, {});
+        result.push({ ...groupKeys, ...quantileValues });
+    });
+
+    return result;
+}
+
+function plotSummary2(data, selectedColumn, prob) {
+    // Remove rows where the selected column is empty
+    const filteredData = data.filter(row => row[selectedColumn] !== '');
+    const alpha = (1 - prob) / 2;
+    const quantiles = [alpha, 0.5, 1 - alpha];
+    const dataQuantiles = groupQuantiles(filteredData, selectedColumn, ['target', 'target_config', 'transform'], quantiles);
+    // make a new plotly line plot plotting target_config on the x-axis.
+    // The y-axis for each target_config should have a partially transparent band between the first and third quantiles
+    // and a line at the median quantile. The line should be colored by the transform.
+    const fig = {
+        data: [],
+        layout: {
+            title: `${selectedColumn} vs target_config`,
+            showlegend: true,
+            height: 600,
+            margin: { l: 80, r: 20, b: 60, t: 50 },
+            shapes: []
+        }
+    };
+    // for each transform, add a line and a band. The line should be the median quantile and the band should be the first and third quantiles, with opacity 0.3
+    // the lines and bands should be colored by the transform
+    transformOrder.forEach(transform => {
+        const transformData = dataQuantiles.filter(row => row.transform === transform);
+        const trace = {
+            x: transformData.map(row => row.target_config),
+            y: transformData.map(row => row[`q0.5`]),
+            type: 'scatter',
+            mode: 'lines',
+            name: transform,
+            legendgroup: transform,
+            line: { color: transformColors(transform) }
+        };
+        fig.data.push(trace);
+        const band = {
+            x: transformData.map(row => row.target_config).concat(transformData.map(row => row.target_config).reverse()),
+            y: transformData.map(row => row[`q${alpha}`]).concat(transformData.map(row => row[`q${1 - alpha}`]).reverse()),
+            mode: 'none',
+            fill: 'toself',
+            fillcolor: transformColors(transform),
+            legendgroup: transform,
+            line: { width: 0 },
+            opacity: 0.3,
+            showlegend: false
+        };
+        fig.data.push(band);
+    });
+
+    fig.layout['xaxis'] = { title: 'target_config', automargin: true, tickangle: 45 };
+    fig.layout['yaxis'] = { title: selectedColumn, type: selectedColumn !== 'n_divergent' && selectedColumn !== 'bfmi' ? 'log' : 'linear', automargin: true, tickpadding: 10 };
+    Plotly.newPlot('plot', fig.data, fig.layout);
 }
