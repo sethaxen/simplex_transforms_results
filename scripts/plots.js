@@ -158,6 +158,24 @@ function groupQuantiles(data, targetColumn, groupColumns, quantiles) {
     return result;
 }
 
+function addNormalizedByBestColumn(data, selectedColumn) {
+    const groupedData = d3.group(data, d => `${d.target}--${d.target_config}--${d.chain}`);
+    const bestValues = {};
+    groupedData.forEach((group, key) => {
+        const bestValue = selectedColumn === 'max_rhat' || selectedColumn === 'max_abs_rel_error' || selectedColumn === 'n_divergent'
+            ? d3.min(group, d => +d[selectedColumn])
+            : d3.max(group, d => +d[selectedColumn]);
+        bestValues[key] = bestValue;
+    });
+
+    const normalizedData = data.map(d => {
+        const bestValue = bestValues[`${d.target}--${d.target_config}--${d.chain}`];
+        return { ...d, [`${selectedColumn}_normalized`]: +d[selectedColumn] / bestValue };
+    });
+
+    return normalizedData;
+}
+
 function plotSummary2(data, selectedColumn, prob) {
     // Remove rows where the selected column is empty
     const filteredData = data.filter(row => row[selectedColumn] !== '');
