@@ -21,6 +21,7 @@
 <body>
     <script src="scripts/sidebar.js"></script>
     <script src="scripts/plots.js"></script>
+    <script src="scripts/utils.js"></script>
 
     <div class="menu-bar">
         <div>
@@ -42,13 +43,14 @@
                 <option value="max_rhat">max_rhat</option>
                 <option value="n_divergent">n_divergent</option>
                 <option value="bfmi">bfmi</option>
+                <option value="condition_number">condition_number</option>
             </select>
         </div>
         <div class="selector">
             <label for="logScaleSelect">Log-simplex:</label>
             <input type="checkbox" id="logScaleSelect" checked>
         </div>
-        <div class="selector">
+        <div class="selector" id="estimateSelector">
             <label for="estimateSelect">Estimate:</label>
             <select id="estimateSelect">
                 <option value="x_mean" selected>x_mean</option>
@@ -81,35 +83,49 @@
         </div>
     </div>
     <script>
-        d3.csv("results/summaries/all.csv").then(data => {
-            function updatePlots() {
-                let selectedColumn = document.getElementById('columnSelect').value;
-                const selectedEstimate = document.getElementById('estimateSelect').value;
-                const logScale = document.getElementById('logScaleSelect').checked;
-                const bandProbability = parseFloat(document.getElementById('bandProbability').value);
-                const normalize = document.getElementById('normalizeSelect').checked;
-                let filteredData = data.filter(row => (row.log_scale === 'True') === logScale && row.estimate === selectedEstimate && row[selectedColumn] !== '');
+        const columnSelector = document.getElementById('columnSelect');
+        const estimateSelector = document.getElementById('estimateSelector');
+        
+        function toggleEstimateSelector() {
+            const selectedColumn = columnSelector.value;
+            const isConditionNumber = selectedColumn === 'condition_number';
+            estimateSelector.style.display = isConditionNumber ? 'none' : 'block';
+        }
+    
+        function updatePlots() {
+            let selectedColumn = document.getElementById('columnSelect').value;
+            const selectedEstimate = document.getElementById('estimateSelect').value;
+            const logScale = document.getElementById('logScaleSelect').checked;
+            const bandProbability = parseFloat(document.getElementById('bandProbability').value);
+            const normalize = document.getElementById('normalizeSelect').checked;            
+            d3.csv(getDataFile(columnSelector.value)).then(data => {
+                let filteredData = data.filter(row => (row.log_scale === 'True') === logScale && row[selectedColumn] !== '');
+                if (data.columns.includes("estimate")) {
+                    filteredData = filteredData.filter(row => row.estimate === selectedEstimate);
+                }
                 if (normalize) {
                     filteredData = addNormalizedByBestColumn(filteredData, selectedColumn);
                     selectedColumn += '_normalized';
                 }
                 plotSummary2(filteredData, selectedColumn, bandProbability);
-            }
+            }).catch(error => {
+                console.error('Error loading or parsing data:', error);
+            });
+        }
 
-            document.getElementById('columnSelect').addEventListener('change', updatePlots);
-            document.getElementById('logScaleSelect').addEventListener('change', updatePlots);
-            document.getElementById('estimateSelect').addEventListener('change', updatePlots);
-            document.getElementById('bandProbability').addEventListener('input', updatePlots);
-            document.getElementById('normalizeSelect').addEventListener('change', updatePlots);
+        document.getElementById('columnSelect').addEventListener('change', toggleEstimateSelector);
+        document.getElementById('columnSelect').addEventListener('change', updatePlots);
+        document.getElementById('logScaleSelect').addEventListener('change', updatePlots);
+        document.getElementById('estimateSelect').addEventListener('change', updatePlots);
+        document.getElementById('bandProbability').addEventListener('input', updatePlots);
+        document.getElementById('normalizeSelect').addEventListener('change', updatePlots);
 
-            // Initial plot
-            updatePlots();
+        // Initial plot
+        toggleEstimateSelector();
+        updatePlots();
 
-            // Update plot on window resize to handle mobile view
-            window.addEventListener('resize', updatePlots);
-        }).catch(error => {
-            console.error('Error loading or parsing data:', error);
-        });
+        // Update plot on window resize to handle mobile view
+        window.addEventListener('resize', updatePlots);
     </script>
 </body>
 </html>

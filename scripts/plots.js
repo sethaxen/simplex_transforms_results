@@ -109,6 +109,21 @@ function plotSummary(data, selectedColumn, numCols) {
                     color: 'black'
                 }
             });
+        } else if (selectedColumn === 'condition_number') {
+            fig.layout.shapes.push({
+                type: 'line',
+                x0: 0,
+                x1: 1,
+                y0: 1,
+                y1: 1,
+                xref: `x${index + 1} domain`,
+                yref: `y${index + 1}`,
+                line: {
+                    dash: 'dot',
+                    color: 'black'
+                },
+                zorder: -1000,
+            });
         }
     });
 
@@ -162,7 +177,7 @@ function addNormalizedByBestColumn(data, selectedColumn) {
     const groupedData = d3.group(data, d => `${d.target}--${d.target_config}--${d.chain}`);
     const bestValues = {};
     groupedData.forEach((group, key) => {
-        const bestValue = selectedColumn === 'max_rhat' || selectedColumn === 'max_abs_rel_error' || selectedColumn === 'n_divergent' || selectedColumn === 'rmsre'
+        const bestValue = selectedColumn === 'max_rhat' || selectedColumn === 'max_abs_rel_error' || selectedColumn === 'n_divergent' || selectedColumn === 'rmsre' || selectedColumn === 'condition_number'
             ? d3.min(group, d => +d[selectedColumn])
             : d3.max(group, d => +d[selectedColumn]);
         bestValues[key] = bestValue;
