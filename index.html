@@ -71,12 +71,12 @@
 
         function updatePlots() {
             const selectedColumn = columnSelector.value;
-            const selectedEstimate = estimateSelector.value;
+            const selectedEstimate = document.getElementById('estimateSelect').value;
             const logScale = document.getElementById('logScaleSelect').checked;
             const isMobile = window.innerWidth <= 768;
             const isNarrow = window.innerWidth <= 1200;
             const numCols = isMobile ? 1 : isNarrow ? 2 : 3;
-            d3.csv(getDataFile(columnSelector.value)).then(data => {
+            d3.csv(getDataFile(selectedColumn)).then(data => {
                 let filteredData = data.filter(row => (row.log_scale === 'True') === logScale)
                 if (data.columns.includes("estimate")) {
                     filteredData = filteredData.filter(row => row.estimate === selectedEstimate);
@@ -87,8 +87,8 @@
             });
         }
 
-        document.getElementById('columnSelect').addEventListener('change', toggleEstimateSelector);
-        document.getElementById('columnSelect').addEventListener('change', updatePlots);
+        columnSelector.addEventListener('change', toggleEstimateSelector);
+        columnSelector.addEventListener('change', updatePlots);
         document.getElementById('logScaleSelect').addEventListener('change', updatePlots);
         document.getElementById('estimateSelect').addEventListener('change', updatePlots);
 
